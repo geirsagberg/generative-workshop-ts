@@ -10,5 +10,8 @@
     "@types/p5": "^1.3.0",
     "typescript": "^4.3.2",
     "vite": "^2.4.3"
+  },
+  "dependencies": {
+    "p5": "^1.4.0"
   }
 }
