@@ -16,7 +16,7 @@ const LAYER_COUNT = 10;
 const MEAN_RADIUS = size(600);
 
 /* Enable strokes on the border of each layer, specify weight if enabled */
-const HAS_STROKE = false;
+const HAS_STROKE = true;
 const STROKE_WEIGHT = size(1);
 
 /* Layers are light to dark (from the center), enable to reverse it */
@@ -27,10 +27,10 @@ const CAP_LIGHTNESS = true;
 
 /* The degree to which noise affects the layers */
 /* Low values are blobby, high values are spikey */
-const NOISE_MULTIPLIER = 0.2;
+const NOISE_MULTIPLIER = 0.3;
 
 /* The speed at which the layers */
-const NOISE_SPEED = 0.00375;
+const NOISE_SPEED = 0.015;
 
 /* Mirror the layers on either axis */
 const SYMMETRICAL_X = false;
@@ -44,10 +44,10 @@ const USE_PALETTE_BACKGROUND = true;
 /* The amount of points that make up each layer, lower means "pointier" */
 /* For example 3 points mean triangular layers, 4 means squares */
 /* Higher might not be noticable, but will make for smoother borders */
-const POINT_COUNT = 500;
+const POINT_COUNT = 200;
 
 /* Mild rotation, negative speed rotates counter-clockwise */
-const ROTATION_SPEED = 0.001;
+const ROTATION_SPEED = 0.01;
 
 /*
 
@@ -101,12 +101,14 @@ function draw() {
 
 function drawBackground() {
   if (INVERTED_GRADIENT) {
-    CAP_LIGHTNESS ? background(FILL) : background(255);
+    CAP_LIGHTNESS ? background("#ffffff05") : background(255);
+  } else if (USE_FILL_AS_BACKGROUND) {
+    background(FILL);
+  } else if (USE_PALETTE_BACKGROUND) {
+    background(BG);
   } else {
     background(0);
   }
-  USE_FILL_AS_BACKGROUND && background(FILL);
-  USE_PALETTE_BACKGROUND && background(BG);
 }
 
 function drawLayer(r, i) {
@@ -115,13 +117,22 @@ function drawLayer(r, i) {
     ? i / LAYER_COUNT
     : 1 - i / LAYER_COUNT;
 
+  const animatedFill = color(
+    (hue(FILL) + frameCount) % 360,
+    saturation(FILL),
+    lightness(FILL)
+  );
+
   /* Adjust saturation and lightness based on the layer factor */
   const fillColor = color(
-    hue(FILL),
-    layerColorFactor * saturation(FILL),
-    layerColorFactor * (CAP_LIGHTNESS ? lightness(FILL) : 100)
+    hue(animatedFill),
+    layerColorFactor * saturation(animatedFill),
+    layerColorFactor * (CAP_LIGHTNESS ? lightness(animatedFill) : 100)
   );
+  HAS_STROKE ? stroke(animatedFill) : noStroke();
   fill(fillColor);
+
+  const animatedNoiseMultiplier = NOISE_MULTIPLIER;
 
   /* Iterate through a full circle of angles to make a layer */
   beginShape();
@@ -129,10 +140,10 @@ function drawLayer(r, i) {
     /* Maybe overcomplicated way of getting x and y coordinate in noise field */
     const xOff = SYMMETRICAL_Y
       ? cos(a)
-      : map(i * cos(a) + 1, -1, 1, 1, 1 + NOISE_MULTIPLIER);
+      : map(i * cos(a) + 1, -1, 1, 1, 1 + animatedNoiseMultiplier);
     const yOff = SYMMETRICAL_X
       ? sin(a)
-      : map(i * sin(a) + 1, -1, 1, 1, 1 + NOISE_MULTIPLIER);
+      : map(i * sin(a) + 1, -1, 1, 1, 1 + animatedNoiseMultiplier);
 
     /* Get noise based on x, y, and the "time" */
     const noised = noise(xOff, yOff, frameCount * NOISE_SPEED);
